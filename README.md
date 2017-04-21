@@ -1,5 +1,5 @@
 # DCNN
-An implementation of Diffusion-Convolutional Neural Networks [1] in Theano and Lasagne.
+An implementation of [Diffusion-Convolutional Neural Networks](http://papers.nips.cc/paper/6212-diffusion-convolutional-neural-networks.pdf) [1] in Theano and Lasagne.
 
 ## Installation
     git clone ...
