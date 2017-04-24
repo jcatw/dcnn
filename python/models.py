@@ -81,9 +81,11 @@ class NodeClassificationDCNN(object):
                 if start < end:
                     train_loss += self.train_step(X, Y, train_indices[start:end])
 
+            train_loss /= num_batch
+
             valid_loss = self.validation_step(X, Y, valid_indices)
 
-            print "Epoch %d training error: %.6f" % (epoch, train_loss)
+            print "Epoch %d mean training error: %.6f" % (epoch, train_loss)
             print "Epoch %d validation error: %.6f" % (epoch, valid_loss)
 
             validation_losses.append(valid_loss)
@@ -282,13 +284,16 @@ class GraphClassificationDCNN(object):
             train_loss = 0.0
             for index in train_indices:
                 train_loss += self.train_step(A[index], X[index], Y[index])
+            train_loss /= len(train_indices)
 
             valid_loss = 0.0
             for index in valid_indices:
                 valid_loss = self.validation_step(A[index], X[index], Y[index])
+            valid_loss /= len(valid_indices)
 
-            print "Epoch %d training error: %.6f" % (epoch, train_loss)
-            print "Epoch %d validation error: %.6f" % (epoch, valid_loss)
+
+            print "Epoch %d mean training error: %.6f" % (epoch, train_loss)
+            print "Epoch %d mean validation error: %.6f" % (epoch, valid_loss)
 
             validation_losses.append(valid_loss)
 
