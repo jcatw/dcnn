@@ -37,6 +37,7 @@ class DCNNLayer(lasagne.layers.MergeLayer):
         """Compute diffusion convolutional activation of inputs."""
 
         Apow = inputs[0]
+
         X = inputs[1]
 
         Apow_dot_X = T.dot(Apow, X)
@@ -109,6 +110,20 @@ class AggregatedDCNNLayer(lasagne.layers.MergeLayer):
 
     def get_output_shape_for(self, input_shapes):
         shape = (1, (self.parameters.num_hops + 1) * self.parameters.num_features)
+        return shape
+
+
+class ArrayIndexLayer(lasagne.layers.MergeLayer):
+    def get_output_for(self, inputs, **kwargs):
+        X = inputs[0]
+        indices = inputs[1]
+
+        return X[indices]
+
+    def get_output_shape_for(self, input_shapes):
+        in_shape = input_shapes[0]
+        index_shape = input_shapes[1]
+        shape = tuple([index_shape[0]] + list(in_shape[1:]))
         return shape
 
 

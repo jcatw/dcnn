@@ -39,7 +39,7 @@ def run_node_classification(parameters):
 
     num_nodes = A.shape[0]
 
-    indices = np.arange(num_nodes)
+    indices = np.arange(num_nodes).astype('int32')
     np.random.shuffle(indices)
 
     train_indices = indices[:num_nodes // 3]
@@ -66,7 +66,7 @@ def run_graph_classification(params):
 
     num_graphs = len(A)
 
-    indices = np.arange(num_graphs)
+    indices = np.arange(num_graphs).astype('int32')
     np.random.shuffle(indices)
 
     train_indices = indices[:num_graphs // 3]
