@@ -112,6 +112,50 @@ class AggregatedDCNNLayer(lasagne.layers.MergeLayer):
         shape = (1, (self.parameters.num_hops + 1) * self.parameters.num_features)
         return shape
 
+class AggregatedFeaturesDCNNLayer(AggregatedDCNNLayer):
+    """A graph-level DCNN layer that aggregates across features.
+
+    This class contains the (symbolic) Lasagne internals for a graph-level DCNN layer.  This class should
+    be used in conjunction with a user-facing model class.
+    """
+
+    def get_output_for(self, inputs, **kwargs):
+        """
+        Compute diffusion convolution of inputs.
+
+        """
+
+        A = inputs[0]
+        X = inputs[1]
+
+        # Normalize by degree.
+        A = A / (T.sum(A, 0) + 1.0)
+
+        Apow_list = [T.identity_like(A)]
+        for i in range(1, self.parameters.num_hops + 1):
+            Apow_list.append(A.dot(Apow_list[-1]))
+        Apow = T.stack(Apow_list)
+
+        Apow_dot_X = T.dot(Apow, X)
+
+        Apow_dot_X_times_W = Apow_dot_X * self.W
+
+        out = self.nonlinearity(
+            T.mean(
+                T.reshape(
+                    T.mean(Apow_dot_X_times_W, 1),
+                    (1, (self.parameters.num_hops + 1), self.num_features)
+                ),
+                2
+            )
+        )
+
+        return out
+
+    def get_output_shape_for(self, input_shapes):
+        shape = (1, self.parameters.num_hops + 1)
+        return shape
+
 
 class ArrayIndexLayer(lasagne.layers.MergeLayer):
     def get_output_for(self, inputs, **kwargs):

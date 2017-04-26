@@ -9,6 +9,11 @@ import util
 
 
 class NodeClassificationDCNN(object):
+    """A DCNN model for node classification.
+
+    This is a shallow model.
+
+    (K, X) -> DCNN -> Dense -> Out"""
     def __init__(self, parameters, A):
         self.params = parameters
 
@@ -110,6 +115,11 @@ class NodeClassificationDCNN(object):
 
 
 class DeepNodeClassificationDCNN(NodeClassificationDCNN):
+    """A Deep DCNN model for node classification.
+
+    This model allows for several DCNN layers.
+
+    (K, X) -> DCNN -> DCNN -> ... -> DCNN -> Dense -> Out"""
     def __init__(self, parameters, A):
         self.params = parameters
 
@@ -196,6 +206,11 @@ class DeepNodeClassificationDCNN(NodeClassificationDCNN):
 
 
 class DeepDenseNodeClassificationDCNN(NodeClassificationDCNN):
+    """A Deep DCNN model for node classification.
+
+    Composed of one DCNN layer for the input followed by several dense layers.
+
+    (K, X) -> DCNN -> Dense -> Dense -> ... -> Dense -> Out"""
     def _register_model_layers(self):
         self.l_dcnn = layers.DCNNLayer(
             [self.l_in_k, self.l_in_x],
@@ -311,6 +326,18 @@ class GraphClassificationDCNN(object):
         return predictions
 
 
+class GraphClassificationFeatureAggregatedDCNN(GraphClassificationDCNN):
+    def _register_model_layers(self):
+        self.l_dcnn = layers.AggregatedFeaturesDCNNLayer(
+            [self.l_in_a, self.l_in_x],
+            self.params,
+            1,
+        )
 
+        self.l_out = lasagne.layers.DenseLayer(
+            self.l_dcnn,
+            num_units=self.params.num_classes,
+            nonlinearity=params.nonlinearity_map[self.params.out_nonlinearity],
+        )
 
 
