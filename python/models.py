@@ -13,7 +13,8 @@ class NodeClassificationDCNN(object):
 
     This is a shallow model.
 
-    (K, X) -> DCNN -> Dense -> Out"""
+    (K, X) -> DCNN -> Dense -> Out
+    """
     def __init__(self, parameters, A):
         self.params = parameters
 
@@ -119,7 +120,8 @@ class DeepNodeClassificationDCNN(NodeClassificationDCNN):
 
     This model allows for several DCNN layers.
 
-    (K, X) -> DCNN -> DCNN -> ... -> DCNN -> Dense -> Out"""
+    (K, X) -> DCNN -> DCNN -> ... -> DCNN -> Dense -> Out
+    """
     def __init__(self, parameters, A):
         self.params = parameters
 
@@ -210,7 +212,8 @@ class DeepDenseNodeClassificationDCNN(NodeClassificationDCNN):
 
     Composed of one DCNN layer for the input followed by several dense layers.
 
-    (K, X) -> DCNN -> Dense -> Dense -> ... -> Dense -> Out"""
+    (K, X) -> DCNN -> Dense -> Dense -> ... -> Dense -> Out
+    """
     def _register_model_layers(self):
         self.l_dcnn = layers.DCNNLayer(
             [self.l_in_k, self.l_in_x],
@@ -237,6 +240,12 @@ class DeepDenseNodeClassificationDCNN(NodeClassificationDCNN):
 
 
 class GraphClassificationDCNN(object):
+    """A DCNN for graph classification.
+
+    DCNN Activations are mean-reduced across nodes.
+
+    (P, X) -> DCNN -> Dense -> Out
+    """
     def __init__(self, parameters):
         self.params = parameters
 
@@ -327,6 +336,12 @@ class GraphClassificationDCNN(object):
 
 
 class GraphClassificationFeatureAggregatedDCNN(GraphClassificationDCNN):
+    """A DCNN for graph classification.
+
+    DCNN Activations are mean-reduced across both nodes and features.
+
+    (P, X) -> DCNN -> Dense -> Out
+    """
     def _register_model_layers(self):
         self.l_dcnn = layers.AggregatedFeaturesDCNNLayer(
             [self.l_in_a, self.l_in_x],
