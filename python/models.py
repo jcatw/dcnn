@@ -356,3 +356,37 @@ class GraphClassificationFeatureAggregatedDCNN(GraphClassificationDCNN):
         )
 
 
+class DeepGraphClassificationDCNN(GraphClassificationDCNN):
+    """A Deep DCNN for graph classification.
+
+    DCNN Activations are mean-reduced across nodes.  Several DCNN layers.
+
+    (P, X) -> DCNN -> DCNN -> ... -> DCNN -> Dense -> Out
+    """
+    def _register_model_layers(self):
+        features_layer = self.l_in_x
+        num_features = self.params.num_features
+
+        for i in range(self.params.num_dcnn_layers - 1):
+            l_dcnn = layers.UnaggregatedDCNNLayer(
+                [self.l_in_a, features_layer],
+                self.params,
+                i + 1,
+                num_features=num_features
+            )
+            features_layer = l_dcnn
+            num_features *= (self.params.num_hops + 1)
+
+        l_dcnn = layers.AggregatedDCNNLayer(
+            [self.l_in_a, features_layer],
+            self.params,
+            i + 1,
+            num_features=num_features,
+        )
+
+        self.l_out = lasagne.layers.DenseLayer(
+            l_dcnn,
+            num_units=self.params.num_classes,
+            nonlinearity=params.nonlinearity_map[self.params.out_nonlinearity],
+        )
+
