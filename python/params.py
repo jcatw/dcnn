@@ -9,6 +9,7 @@ nonlinearity_map = {
 
 update_map = {
     'adagrad': lasagne.updates.adagrad,
+    'adam': lasagne.updates.adam,
 }
 
 loss_map = {
