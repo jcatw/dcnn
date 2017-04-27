@@ -14,7 +14,7 @@ update_map = {
 
 loss_map = {
     'multiclass_hinge_loss': lasagne.objectives.multiclass_hinge_loss,
-    'categorical_cross_entropy': lasagne.objectives.categorical_crossentropy
+    'categorical_crossentropy': lasagne.objectives.categorical_crossentropy
 }
 
 class Params(object):
