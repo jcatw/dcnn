@@ -6,6 +6,7 @@ import parser
 
 from python import data
 from python import models
+from python import params as params_mod
 
 
 metadata = {
@@ -32,6 +33,21 @@ model_map = {
     "graph_classification": models.GraphClassificationDCNN,
     "deep_graph_classification": models.DeepGraphClassificationDCNN,
     "feature_aggregated_graph_classification": models.GraphClassificationFeatureAggregatedDCNN,
+}
+
+hyperparameter_choices = {
+    "num_hops": range(6),
+    "learning_rate": [0.01, 0.05, 0.1, 0.25],
+    "optimizer": params_mod.update_map.keys(),
+    "loss": params_mod.loss_map.keys(),
+    "dcnn_nonlinearity": params_mod.nonlinearity_map.keys(),
+    "dense_nonlinearity": params_mod.nonlinearity_map.keys(),
+    "num_epochs": [10, 100, 1000],
+    "batch_size": [10, 100],
+    "early_stopping": [0, 1],
+    "stop_window_size": [1, 5, 10],
+    "num_dcnn_layers": range(1, 6),
+    "num_dense_layers": range(1, 6),
 }
 
 def run_node_classification(parameters):
@@ -96,10 +112,26 @@ def run_graph_classification(params):
 
     test_accuracy /= num_test
     print "Test Accuracy: %.6f" % (test_accuracy,)
+    print params
+    print "RESULTS:%.6f" % test_accuracy
     print "done"
 
 if __name__ == '__main__':
     parameters = parser.parse()
+
+    if parameters.explore:
+        while True:
+            for possibility in hyperparameter_choices.keys():
+                choice = random.choice(hyperparameter_choices[possibility])
+                parameters.set(possibility, choice)
+
+            print "Parameter choices:"
+            print parameters
+
+            if "node_classification" in parameters.model:
+                run_node_classification(parameters)
+            else:
+                run_graph_classification(parameters)
 
     if "node_classification" in parameters.model:
         run_node_classification(parameters)
