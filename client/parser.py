@@ -36,6 +36,8 @@ parser.add_argument('--batch_size', type=int, default=10)
 parser.add_argument('--print_train_accuracy', type=int, default=0)
 parser.add_argument('--print_valid_accuracy', type=int, default=0)
 
+parser.add_argument('--momentum', type=int, default=0)
+
 parser.add_argument('--explore', type=int, default=0)
 
 
@@ -74,6 +76,8 @@ def parse():
 
         print_train_accuracy=args.print_train_accuracy,
         print_valid_accuracy=args.print_valid_accuracy,
+
+        momentum=args.momentum,
 
         explore=args.explore,
     )

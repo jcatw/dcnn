@@ -37,6 +37,8 @@ class NodeClassificationDCNN(object):
         self._loss = lasagne.objectives.aggregate(loss_fn(prediction, self.var_Y), mode='mean')
         model_parameters = lasagne.layers.get_all_params(self.l_out)
         self._updates = update_fn(self._loss, model_parameters, learning_rate=self.params.learning_rate)
+        if self.params.momentum:
+            self._updates = lasagne.updates.apply_momentum(self._updates, model_parameters)
 
         self.apply_loss_and_update = theano.function([self.var_K, self.var_X, self.var_Y], self._loss, updates=self._updates)
         self.apply_loss = theano.function([self.var_K, self.var_X, self.var_Y], self._loss)
@@ -151,6 +153,8 @@ class DeepNodeClassificationDCNN(NodeClassificationDCNN):
         self._loss = lasagne.objectives.aggregate(loss_fn(prediction, self.var_Y), mode='mean')
         model_parameters = lasagne.layers.get_all_params(self.l_out)
         self._updates = update_fn(self._loss, model_parameters, learning_rate=self.params.learning_rate)
+        if self.params.momentum:
+            self._updates = lasagne.updates.apply_momentum(self._updates, model_parameters)
 
         self.apply_loss_and_update = theano.function([self.var_K, self.var_X, self.var_I, self.var_Y], self._loss,
                                                      updates=self._updates)
@@ -265,9 +269,11 @@ class GraphClassificationDCNN(object):
         prediction = lasagne.layers.get_output(self.l_out)
         loss = lasagne.objectives.aggregate(loss_fn(prediction, self.var_Y), mode='mean')
         model_parameters = lasagne.layers.get_all_params(self.l_out)
-        updates = update_fn(loss, model_parameters, learning_rate=self.params.learning_rate)
+        self._updates = update_fn(loss, model_parameters, learning_rate=self.params.learning_rate)
+        if self.params.momentum:
+            self._updates = lasagne.updates.apply_momentum(self._updates, model_parameters)
 
-        self.apply_loss_and_update = theano.function([self.var_A, self.var_X, self.var_Y], loss, updates=updates)
+        self.apply_loss_and_update = theano.function([self.var_A, self.var_X, self.var_Y], loss, updates=self._updates)
         self.apply_loss = theano.function([self.var_A, self.var_X, self.var_Y], loss)
 
         pred = lasagne.layers.get_output(self.l_out)

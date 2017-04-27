@@ -234,3 +234,16 @@ class PowerSeriesLayer(lasagne.layers.Layer):
 
     def get_output_shape_for(self, input_shape):
         return (input_shape[0], self.paramaters.num_hops + 1, input_shape[1])
+
+
+class GraphReductionLayer(lasagne.layers.MergeLayer):
+    def __init__(self, incoming, parameters):
+        super(GraphReductionLayer, self).__init__(incoming)
+        self.parameters = parameters
+
+    def get_output_for(self, inputs):
+        pass
+
+    def get_output_shape_for(self, input_shapes):
+        pass
+
