@@ -5,6 +5,7 @@ nonlinearity_map = {
     'tanh': lasagne.nonlinearities.tanh,
     'softmax': lasagne.nonlinearities.softmax,
     'relu': lasagne.nonlinearities.rectify,
+    'linear': lasagne.nonlinearities.linear,
 }
 
 update_map = {
