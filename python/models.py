@@ -319,6 +319,9 @@ class GraphClassificationDCNN(object):
             print "Epoch %d mean training error: %.6f" % (epoch, train_loss)
             print "Epoch %d mean validation error: %.6f" % (epoch, valid_loss)
 
+            if np.isnan(train_loss) or np.isnan(valid_loss):
+                raise ValueError
+
             train_acc = 0.0
             if self.params.print_train_accuracy:
                 for index in train_indices:
