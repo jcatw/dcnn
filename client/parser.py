@@ -33,6 +33,9 @@ parser.add_argument('--dense_layer_size', type=int, default=100)
 
 parser.add_argument('--batch_size', type=int, default=10)
 
+parser.add_argument('--print_train_accuracy', type=int, default=0)
+parser.add_argument('--print_valid_accuracy', type=int, default=0)
+
 
 def parse():
     args = parser.parse_args()
@@ -66,6 +69,9 @@ def parse():
         num_dense_layers=args.num_dense_layers,
 
         dense_layer_size=args.dense_layer_size,
+
+        print_train_accuracy=args.print_train_accuracy,
+        print_valid_accuracy=args.print_valid_accuracy,
     )
 
     return parameters

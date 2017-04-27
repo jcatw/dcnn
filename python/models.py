@@ -306,6 +306,7 @@ class GraphClassificationDCNN(object):
             np.random.shuffle(train_indices)
 
             train_loss = 0.0
+
             for index in train_indices:
                 train_loss += self.train_step(A[index], X[index], Y[index])
             train_loss /= len(train_indices)
@@ -315,9 +316,28 @@ class GraphClassificationDCNN(object):
                 valid_loss = self.validation_step(A[index], X[index], Y[index])
             valid_loss /= len(valid_indices)
 
-
             print "Epoch %d mean training error: %.6f" % (epoch, train_loss)
             print "Epoch %d mean validation error: %.6f" % (epoch, valid_loss)
+
+            train_acc = 0.0
+            if self.params.print_train_accuracy:
+                for index in train_indices:
+                    pred = self.predict(A[index], X[index])
+                    actual = Y[index].argmax()
+                    if pred == actual:
+                        train_acc += 1.0
+                train_acc /= len(train_indices)
+                print "Epoch %d training accuracy: %.4f" % (epoch, train_acc)
+
+            valid_acc = 0.0
+            if self.params.print_valid_accuracy:
+                for index in valid_indices:
+                    pred = self.predict(A[index], X[index])
+                    actual = Y[index].argmax()
+                    if pred == actual:
+                        valid_acc += 1.0
+                valid_acc /= len(train_indices)
+                print "Epoch %d validation accuracy: %.4f" % (epoch, valid_acc)
 
             validation_losses.append(valid_loss)
 
