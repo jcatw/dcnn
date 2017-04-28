@@ -119,9 +119,19 @@ class NodeClassificationDCNN(object):
 
         return predictions
 
+
 class PostSparseNodeClassificationDCNN(NodeClassificationDCNN):
     def _compute_diffusion_kernel(self, A):
         self.K = util.A_to_post_sparse_diffusion_kernel(
+            A,
+            self.params.num_hops,
+            self.params.diffusion_threshold
+        )
+
+
+class PreSparseNodeClassificationDCNN(NodeClassificationDCNN):
+    def _compute_diffusion_kernel(self, A):
+        self.K = util.A_to_pre_sparse_diffusion_kernel(
             A,
             self.params.num_hops,
             self.params.diffusion_threshold

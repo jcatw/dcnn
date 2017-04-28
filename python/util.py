@@ -28,3 +28,18 @@ def A_to_post_sparse_diffusion_kernel(A, k, threshold):
     K[K < threshold] = 0.0
 
     return K
+
+def A_to_pre_sparse_diffusion_kernel(A, k, threshold):
+    Apow = [np.identity(A.shape[0])]
+
+    if k > 0:
+        d = A / A.sum(0)
+
+        Apow.append(A / (d + 1.0))
+
+        Apow[-1][Apow[-1] < threshold] = 0.0
+
+        for i in range(2, k + 1):
+            Apow.append(np.dot(A / (d + 1.0), Apow[-1]))
+
+    return np.transpose(np.asarray(Apow, dtype='float32'), (1, 0, 2))
