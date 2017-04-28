@@ -32,6 +32,7 @@ model_map = {
     "deep_dense_node_classification": models.DeepDenseNodeClassificationDCNN,
     "graph_classification": models.GraphClassificationDCNN,
     "deep_graph_classification": models.DeepGraphClassificationDCNN,
+    "deep_graph_classification_with_reduction": models.DeepGraphClassificationDCNNWithReduction,
     "feature_aggregated_graph_classification": models.GraphClassificationFeatureAggregatedDCNN,
 }
 

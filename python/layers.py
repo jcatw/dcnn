@@ -241,9 +241,23 @@ class GraphReductionLayer(lasagne.layers.MergeLayer):
         super(GraphReductionLayer, self).__init__(incoming)
         self.parameters = parameters
 
+    def reduce(self, A, i, j):
+        A = T.set_subtensor(A[i, :], A[i, :] + A[j, :])
+        A = T.set_subtensor(A[:, i], A[:, i] + A[:, j])
+        A = T.set_subtensor(A[j, :], T.zeros([A.shape[1]]))
+        A = T.set_subtensor(A[:, j], T.zeros([A.shape[1]]))
+
+        return A
+
     def get_output_for(self, inputs):
-        pass
+        A = inputs[0]
+        X = inputs[1]
+
+        max_degree_node = T.argmax(A.sum(0))
+        min_degree_node = T.argmin(A.sum(0))
+
+        return self.reduce(A, max_degree_node, min_degree_node)
 
     def get_output_shape_for(self, input_shapes):
-        pass
+        return input_shapes[0]
 
