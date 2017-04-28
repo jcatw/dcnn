@@ -25,7 +25,7 @@ class NodeClassificationDCNN(object):
         self.l_in_k = lasagne.layers.InputLayer((None, self.params.num_hops + 1, self.params.num_nodes), input_var=self.var_K)
         self.l_in_x = lasagne.layers.InputLayer((self.params.num_nodes, self.params.num_features), input_var=self.var_X)
 
-        self.K = util.A_to_diffusion_kernel(A, self.params.num_hops)
+        self._compute_diffusion_kernel(A)
 
         # Overridable to customize init behavior.
         self._register_model_layers()
@@ -42,6 +42,9 @@ class NodeClassificationDCNN(object):
 
         self.apply_loss_and_update = theano.function([self.var_K, self.var_X, self.var_Y], self._loss, updates=self._updates)
         self.apply_loss = theano.function([self.var_K, self.var_X, self.var_Y], self._loss)
+
+    def _compute_diffusion_kernel(self, A):
+        self.K = util.A_to_diffusion_kernel(A, self.params.num_hops)
 
     def _register_model_layers(self):
         self.l_dcnn = layers.DCNNLayer(
@@ -115,6 +118,14 @@ class NodeClassificationDCNN(object):
         predictions = pred_fn(self.K[prediction_indices, :, :], X)
 
         return predictions
+
+class PostSparseNodeClassificationDCNN(NodeClassificationDCNN):
+    def _compute_diffusion_kernel(self, A):
+        self.K = util.A_to_post_sparse_diffusion_kernel(
+            A,
+            self.params.num_hops,
+            self.params.diffusion_threshold
+        )
 
 
 class DeepNodeClassificationDCNN(NodeClassificationDCNN):

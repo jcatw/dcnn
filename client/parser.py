@@ -11,6 +11,7 @@ parser.add_argument('--model', type=str, default='node_classification')
 parser.add_argument('--data', type=str, default='cora')
 
 parser.add_argument('--num_hops', type=int, default=3)
+parser.add_argument('--diffusion_threshold', type=float, default=0.05)
 
 parser.add_argument('--learning_rate', type=float, default=0.05)
 parser.add_argument('--num_epochs', type=int, default=10)
@@ -51,6 +52,8 @@ def parse():
         num_epochs=args.num_epochs,
 
         num_hops=args.num_hops,
+        diffusion_threshold=args.diffusion_threshold,
+
         learning_rate=args.learning_rate,
 
         update_fn=args.optimizer,

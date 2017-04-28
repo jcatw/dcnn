@@ -29,6 +29,7 @@ metadata = {
 model_map = {
     "node_classification": models.NodeClassificationDCNN,
     "deep_node_classification": models.DeepNodeClassificationDCNN,
+    "post_sparse_node_classification": models.PostSparseNodeClassificationDCNN,
     "deep_dense_node_classification": models.DeepDenseNodeClassificationDCNN,
     "graph_classification": models.GraphClassificationDCNN,
     "deep_graph_classification": models.DeepGraphClassificationDCNN,

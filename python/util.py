@@ -21,3 +21,10 @@ def A_to_diffusion_kernel(A, k):
             Apow.append(np.dot(A / (d + 1.0), Apow[-1]))
 
     return np.transpose(np.asarray(Apow, dtype='float32'), (1, 0, 2))
+
+def A_to_post_sparse_diffusion_kernel(A, k, threshold):
+    K = A_to_diffusion_kernel(A, k)
+
+    K[K < threshold] = 0.0
+
+    return K
