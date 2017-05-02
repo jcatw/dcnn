@@ -35,6 +35,7 @@ model_map = {
     "graph_classification": models.GraphClassificationDCNN,
     "deep_graph_classification": models.DeepGraphClassificationDCNN,
     "deep_graph_classification_with_reduction": models.DeepGraphClassificationDCNNWithReduction,
+    "deep_graph_classification_with_kron_reduction": models.DeepGraphClassificationDCNNWithKronReduction,
     "feature_aggregated_graph_classification": models.GraphClassificationFeatureAggregatedDCNN,
 }
 

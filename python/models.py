@@ -3,6 +3,8 @@ import numpy as np
 import theano
 import theano.tensor as T
 
+from sklearn import metrics
+
 import layers
 import params
 import util
@@ -98,6 +100,18 @@ class NodeClassificationDCNN(object):
 
             print "Epoch %d mean training error: %.6f" % (epoch, train_loss)
             print "Epoch %d validation error: %.6f" % (epoch, valid_loss)
+
+            if self.params.print_train_accuracy:
+                predictions = self.predict(X, train_indices)
+                actuals = Y[train_indices, :].argmax(1)
+
+                print "Epoch %d training accuracy: %.4f" % (epoch, metrics.accuracy_score(predictions, actuals))
+
+            if self.params.print_valid_accuracy:
+                predictions = self.predict(X, valid_indices)
+                actuals = Y[valid_indices, :].argmax(1)
+
+                print "Epoch %d validation accuracy: %.4f" % (epoch, metrics.accuracy_score(predictions, actuals), )
 
             validation_losses.append(valid_loss)
 
@@ -481,3 +495,56 @@ class DeepGraphClassificationDCNNWithReduction(DeepGraphClassificationDCNN):
             num_units=self.params.num_classes,
             nonlinearity=params.nonlinearity_map[self.params.out_nonlinearity]
         )
+
+
+class DeepGraphClassificationDCNNWithKronReduction(DeepGraphClassificationDCNN):
+    """A Deep DCNN for graph classification with a learnable reduction layer.
+
+        DCNN Activations are mean-reduced across nodes.  Several DCNN layers.
+
+        (P, X) -> DCNN -> Reduction -> DCNN -> ... -> DCNN -> Dense -> Out
+        """
+
+    def _register_model_layers(self):
+        graph_layer = self.l_in_a
+        features_layer = self.l_in_x
+        num_features = self.params.num_features
+
+        for i in range(self.params.num_dcnn_layers - 1):
+            l_dcnn = layers.UnaggregatedDCNNLayer(
+                [graph_layer, features_layer],
+                self.params,
+                i,
+                num_features=num_features
+            )
+            features_layer = l_dcnn
+            num_features *= (self.params.num_hops + 1)
+
+            eigenvec_layer = layers.SmallestEigenvecLayer(
+                [graph_layer],
+                self.params
+            )
+
+            graph_layer = layers.KronReductionLayerA(
+                [graph_layer, eigenvec_layer],
+                self.params,
+            )
+
+            features_layer = layers.KronReductionLayerX(
+                [graph_layer, features_layer, eigenvec_layer],
+                self.params,
+            )
+
+        l_dcnn = layers.AggregatedDCNNLayer(
+            [graph_layer, features_layer],
+            self.params,
+            i,
+            num_features=num_features,
+        )
+
+        self.l_out = lasagne.layers.DenseLayer(
+            l_dcnn,
+            num_units=self.params.num_classes,
+            nonlinearity=params.nonlinearity_map[self.params.out_nonlinearity]
+        )
+

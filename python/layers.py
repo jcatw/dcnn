@@ -241,7 +241,10 @@ class GraphReductionLayer(lasagne.layers.MergeLayer):
         super(GraphReductionLayer, self).__init__(incoming)
         self.parameters = parameters
 
-    def reduce(self, A, i, j):
+    def reduce(self, A, indices):
+        i = indices[0]
+        j = indices[1]
+
         A = T.set_subtensor(A[i, :], A[i, :] + A[j, :])
         A = T.set_subtensor(A[:, i], A[:, i] + A[:, j])
         A = T.set_subtensor(A[j, :], T.zeros([A.shape[1]]))
@@ -256,8 +259,173 @@ class GraphReductionLayer(lasagne.layers.MergeLayer):
         max_degree_node = T.argmax(A.sum(0))
         min_degree_node = T.argmin(A.sum(0))
 
-        return self.reduce(A, max_degree_node, min_degree_node)
+        return self.reduce(A, [max_degree_node, min_degree_node])
 
     def get_output_shape_for(self, input_shapes):
         return input_shapes[0]
 
+
+class LearnableGraphReductionLayer(GraphReductionLayer):
+    def __init__(self,
+                 incoming,
+                 parameters,
+                 layer_num,
+                 W=lasagne.init.Normal(0.01),
+                 num_features=None):
+        super(LearnableGraphReductionLayer, self).__init__(incoming, parameters)
+
+        if num_features is None:
+            self.num_features = self.parameters.num_features
+        else:
+            self.num_features = num_features
+
+        self.W = self.add_param(
+            W,
+            (1, self.parameters.num_hops + 1, self.num_features), name='DCNN_REDUCTION_%d' % layer_num
+        )
+
+    def _outer_substract(self, x, y):
+        z = x.dimshuffle(0, 1, 'x')
+        z = T.addbroadcast(z, 2)
+        return (z - y.T).dimshuffle(0, 2, 1)
+
+    def _symbolic_triangles(self, A):
+        """Computes the number of triangles involving any two nodes.
+
+        A * A^2
+        For more details, see
+        http://stackoverflow.com/questions/40269150/number-of-triangles-involving-any-two-nodes
+
+        """
+        return A * T.dot(A, A)
+
+    def _symbolic_arrows(self, A):
+        """Computes the number of unclosed triangles involving any two nodes.
+
+        (1 - A) A^2 + A (D + D^T - A^2 - 1)
+        """
+        # Compute and broadcast degree.
+        num_nodes = A.shape[0]
+        D = T.tile(T.sum(A, axis=1), (num_nodes, 1))
+
+        return (
+            (T.eye(num_nodes) - A) * T.dot(A, A) +
+            A * (D + D.T - T.dot(A, A) - 2)
+        )
+
+    def get_output_for(self, inputs):
+        A = inputs[0]
+        X = inputs[1]
+
+        num_nodes = A.shape[0]
+        structural_symbolic_loss = T.addbroadcast(
+            T.reshape(
+                1 + A + self._symbolic_triangles(A) + self._symbolic_arrows(A),
+                [num_nodes, num_nodes, 1]
+            ),
+            2
+        )
+
+        feature_symbolic_loss = (
+            (self._outer_substract(X, X) ** 2) *
+            T.addbroadcast(self.W, 0, 1)
+        )
+
+        unnormalized_logprobs = T.sum(
+            structural_symbolic_loss + feature_symbolic_loss,
+            2
+        )
+
+        flat_reduction_index = T.argmax(unnormalized_logprobs)
+
+        return self.reduce(A, [
+            flat_reduction_index // num_nodes,
+            flat_reduction_index % num_nodes
+        ])
+
+
+def _2d_slice(M, ind1, ind2):
+    temp = M[ind1, :]
+    temp = temp[:, ind2]
+
+    return temp
+
+
+class SmallestEigenvecLayer(lasagne.layers.MergeLayer):
+    def __init__(self, incoming, parameters):
+        super(SmallestEigenvecLayer, self).__init__(incoming)
+        self.parameters = parameters
+
+    def get_output_for(self, inputs):
+        A = inputs[0]
+
+        eigenvals_eigenvecs = T.nlinalg.eig(A)
+
+        smallest_eigenval_index = T.argmin(eigenvals_eigenvecs[0])
+        smallest_eigenvec = eigenvals_eigenvecs[1][smallest_eigenval_index]
+
+        return smallest_eigenvec
+
+    def get_output_shape_for(self, input_shapes):
+        A_shape = input_shapes[0]
+
+        return A_shape[0]
+
+
+class KronReductionLayerA(lasagne.layers.MergeLayer):
+    def __init__(self, incoming, parameters):
+        super(KronReductionLayerA, self).__init__(incoming)
+        self.parameters = parameters
+
+        self.shape = (None, None)
+
+    def get_output_for(self, inputs):
+        A = inputs[0]
+        smallest_eigenvec = inputs[1]
+
+        keep = smallest_eigenvec >= 0
+        reduced = smallest_eigenvec < 0
+
+        a = _2d_slice(A, keep, keep)
+        b = _2d_slice(A, keep, reduced)
+        c = _2d_slice(A, reduced, reduced)
+
+        reduced_A = a - b.dot(T.nlinalg.pinv(c)).dot(b.T)
+
+        self.shape = reduced_A.shape
+
+        return reduced_A
+
+    def get_output_shape_for(self, input_shapes):
+        return self.shape
+
+
+class KronReductionLayerX(lasagne.layers.MergeLayer):
+    def __init__(self, incoming, parameters):
+        super(KronReductionLayerX, self).__init__(incoming)
+        self.parameters = parameters
+
+        self.shape = (None, None)
+
+    def get_output_for(self, inputs):
+        A = inputs[0]
+        X = inputs[1]
+        smallest_eigenvec = inputs[2]
+
+        keep = smallest_eigenvec >= 0
+        reduced = smallest_eigenvec < 0
+
+        b = _2d_slice(A, keep, reduced)
+        c = _2d_slice(A, reduced, reduced)
+
+        bx = X[keep, :]
+        cx = X[reduced, :]
+
+        reduced_X = bx - b.dot(T.nlinalg.pinv(c)).dot(cx)
+
+        self.shape = reduced_X.shape
+
+        return reduced_X
+
+    def get_output_shape_for(self, input_shapes):
+        return self.shape
