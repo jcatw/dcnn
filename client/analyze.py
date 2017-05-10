@@ -7,8 +7,8 @@ def check_sparse_transition(A, parameters, thresholded=False):
     P = A / (A.sum(0) + 1.0)
 
     if thresholded:
-        P[P < parameters.diffusion_threshold] = 0
-        P[P >= parameters.diffusion_threshold] = 1
+        P[P <= parameters.diffusion_threshold] = 0
+        P[P > parameters.diffusion_threshold] = 1
     else:
         P[P != 0] = 1
 
@@ -28,13 +28,13 @@ def check_sparse_kernel(A, parameters, post=False):
     else:
         K = util.A_to_pre_sparse_diffusion_kernel(A, parameters.num_hops, parameters.diffusion_threshold)
 
-    K[K < parameters.diffusion_threshold] = 0
-    K[K >= parameters.diffusion_threshold] = 1
+    K[K <= parameters.diffusion_threshold] = 0
+    K[K > parameters.diffusion_threshold] = 1
 
     non_zeros = K.sum()
     num_nodes = A.shape[1]
 
-    num_entries = parameters.num_hops * (num_nodes ** 2)
+    num_entries = (parameters.num_hops + 1) * (num_nodes ** 2)
 
     print "num nodes: %d" % num_nodes
     print "num entries: %d" % num_entries
