@@ -41,6 +41,8 @@ parser.add_argument('--momentum', type=int, default=0)
 
 parser.add_argument('--explore', type=int, default=0)
 
+parser.add_argument('--check_sparse', type=int, default=0)
+
 
 def parse():
     args = parser.parse_args()
@@ -83,6 +85,7 @@ def parse():
         momentum=args.momentum,
 
         explore=args.explore,
+        check_sparse=args.check_sparse,
     )
 
     return parameters
