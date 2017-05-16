@@ -14,7 +14,7 @@ parser.add_argument('--num_hops', type=int, default=3)
 parser.add_argument('--diffusion_threshold', type=float, default=0.05)
 
 parser.add_argument('--learning_rate', type=float, default=0.05)
-parser.add_argument('--num_epochs', type=int, default=10)
+parser.add_argument('--num_epochs', type=int, default=100)
 
 parser.add_argument('--optimizer', type=str, default='adagrad')
 
