@@ -28,8 +28,7 @@ def check_sparse_kernel(A, parameters, post=False):
     else:
         K = util.A_to_pre_sparse_diffusion_kernel(A, parameters.num_hops, parameters.diffusion_threshold)
 
-    K[K <= parameters.diffusion_threshold] = 0
-    K[K > parameters.diffusion_threshold] = 1
+    K[K != 0] = 1
 
     non_zeros = K.sum()
     num_nodes = A.shape[1]
