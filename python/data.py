@@ -2,10 +2,12 @@ import cPickle as cp
 import inspect
 import numpy as np
 import os
+import scipy.sparse as sp
+import networkx as nx
 
 current_dir = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))
 
-def parse_cora():
+def _parse_cora_features_labels():
     path = "%s/../data/cora/" % (current_dir,)
 
     id2index = {}
@@ -44,6 +46,14 @@ def parse_cora():
     features = np.asarray(features, dtype='float32')
     labels = np.asarray(labels, dtype='int32')
 
+    return features, labels, id2index
+
+
+def parse_cora():
+    path = "%s/../data/cora/" % (current_dir,)
+
+    features, labels, id2index = _parse_cora_features_labels()
+
     n_papers = len(id2index)
 
     adj = np.zeros((n_papers, n_papers), dtype='float32')
@@ -56,6 +66,29 @@ def parse_cora():
             adj[id2index[items[1]], id2index[items[0]]] = 1.0
 
     return adj.astype('float32'), features.astype('float32'), labels.astype('int32')
+
+
+def parse_cora_sparse():
+    path = "%s/../data/cora/" % (current_dir,)
+
+    features, labels, id2index = _parse_cora_features_labels()
+
+    n_papers = len(id2index)
+    graph = nx.Graph()
+
+    with open(path + 'cora.cites', 'r') as f:
+        for line in f.xreadlines():
+            items = line.strip().split('\t')
+
+            tail = id2index[items[0]]
+            head = id2index[items[1]]
+
+            graph.add_edge(head, tail)
+
+    adj = nx.to_scipy_sparse_matrix(graph, format='csr')
+
+    return adj.astype('float32'), features.astype('float32'), labels.astype('int32')
+
 
 def parse_graph_data(graph_name='nci1.graph'):
     path = "%s/../data/" % (current_dir,)

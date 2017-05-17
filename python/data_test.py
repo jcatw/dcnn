@@ -26,3 +26,12 @@ class TestCora(unittest.TestCase):
 
         self.assertFalse(self_loops)
 
+
+class TestSparseCora(TestCora):
+    def setUp(self):
+        self.A, self.X, self.Y = data.parse_cora_sparse()
+
+    def test_A_symmetry(self):
+        # Not sure how to do this
+        self.assertTrue(False)
+

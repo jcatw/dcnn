@@ -16,6 +16,12 @@ metadata = {
         "num_features": 1433,
         "num_classes": 7,
     },
+    "sparse_cora": {
+        "parser": data.parse_cora_sparse,
+        "num_nodes": 2708,
+        "num_features": 1433,
+        "num_classes": 7,
+    },
     'nci1': {
         "parser": lambda: data.parse_graph_data('nci1.graph'),
         "num_nodes": None,
