@@ -54,6 +54,48 @@ class DCNNLayer(lasagne.layers.MergeLayer):
         shape = (None, self.parameters.num_hops + 1, self.num_features)
         return shape
 
+class SparseDCNNLayer(DCNNLayer):
+    """A node-level DCNN layer.
+
+    This class contains the (symbolic) Lasagne internals for a node-level DCNN layer.  This class should
+    be used in conjunction with a user-facing model class.
+    """
+    def __init__(self, incomings, parameters, layer_num,
+                 W=lasagne.init.Normal(0.01),
+                 num_features=None,
+                 **kwargs):
+
+        super(DCNNLayer, self).__init__(incomings, **kwargs)
+
+        self.parameters = parameters
+
+        if num_features is None:
+            self.num_features = self.parameters.num_features
+        else:
+            self.num_features = num_features
+
+        self.W = T.addbroadcast(
+            self.add_param(W,
+                           (1, parameters.num_hops + 1, self.num_features), name='DCNN_W_%d' % layer_num), 0)
+
+        self.nonlinearity = params.nonlinearity_map[self.parameters.dcnn_nonlinearity]
+
+
+    def get_output_for(self, inputs, **kwargs):
+        """Compute diffusion convolutional activation of inputs."""
+
+        Apow = T.horizontal_stack(*inputs[:-1])
+
+        X = inputs[-1]
+
+        Apow_dot_X = T.dot(Apow, X)
+
+        Apow_dot_X_times_W = Apow_dot_X * self.W
+
+        out = self.nonlinearity(Apow_dot_X_times_W)
+
+        return out
+
 
 class AggregatedDCNNLayer(lasagne.layers.MergeLayer):
     """A graph-level DCNN layer.

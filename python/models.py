@@ -134,6 +134,78 @@ class NodeClassificationDCNN(object):
         return predictions
 
 
+class TrueSparseNodeClassificationDCNN(NodeClassificationDCNN):
+    """A DCNN model for node classification with truly sparse pre-thresholding.
+
+    This is a shallow model.
+
+    (K, X) -> DCNN -> Dense -> Out
+    """
+
+    def _compute_diffusion_kernel(self, A):
+        self.K = util.sparse_A_to_diffusion_kernel(
+            A,
+            self.params.num_hops
+        )
+
+    def _register_model_layers(self):
+        input = self.l_in_k + [self.l_in_x]
+        self.l_dcnn = layers.SparseDCNNLayer(
+            input,
+            self.params,
+            1,
+        )
+
+        self.l_out = lasagne.layers.DenseLayer(
+            self.l_dcnn,
+            num_units=self.params.num_classes,
+            nonlinearity=params.nonlinearity_map[self.params.out_nonlinearity],
+        )
+
+    def __init__(self, parameters, A):
+        self.params = parameters
+
+        self.var_K = []
+        for i in range(self.params.num_hops + 1):
+            self.var_K.append(T.matrix('K_%d' % i))
+
+        self.var_X = T.matrix('X')
+        self.var_Y = T.imatrix('Y')
+
+        self.l_in_k = [lasagne.layers.InputLayer((None, self.params.num_nodes), input_var=vK) for vK in self.var_K]
+        self.l_in_x = lasagne.layers.InputLayer((self.params.num_nodes, self.params.num_features), input_var=self.var_X)
+
+        self._compute_diffusion_kernel(A)
+
+        # Overridable to customize init behavior.
+        self._register_model_layers()
+
+        loss_fn = params.loss_map[self.params.loss_fn]
+        update_fn = params.update_map[self.params.update_fn]
+
+        prediction = lasagne.layers.get_output(self.l_out)
+        self._loss = lasagne.objectives.aggregate(loss_fn(prediction, self.var_Y), mode='mean')
+        model_parameters = lasagne.layers.get_all_params(self.l_out)
+        self._updates = update_fn(self._loss, model_parameters, learning_rate=self.params.learning_rate)
+        if self.params.momentum:
+            self._updates = lasagne.updates.apply_momentum(self._updates, model_parameters)
+
+        self.apply_loss_and_update = theano.function(self.var_K + [self.var_X, self.var_Y], self._loss, updates=self._updates)
+        self.apply_loss = theano.function(self.var_K + [self.var_X, self.var_Y], self._loss)
+
+    def train_step(self, X, Y, batch_indices):
+        #inputs = [k[batch_indices, :] for k in self.K] + [X, Y[batch_indices, :]]
+        inputs = self.K + [X, Y[batch_indices, :]]
+        return self.apply_loss_and_update(
+            *inputs
+        )
+
+    def validation_step(self, X, Y, valid_indices):
+        return self.apply_loss(
+            self.K[valid_indices, :, :], X, Y[valid_indices, :]
+        )
+
+
 class PostSparseNodeClassificationDCNN(NodeClassificationDCNN):
     def _compute_diffusion_kernel(self, A):
         self.K = util.A_to_post_sparse_diffusion_kernel(

@@ -2,7 +2,6 @@ import cPickle as cp
 import inspect
 import numpy as np
 import os
-import scipy.sparse as sp
 import networkx as nx
 
 current_dir = os.path.dirname(os.path.abspath(inspect.stack()[0][1]))

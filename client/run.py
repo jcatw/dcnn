@@ -37,6 +37,7 @@ model_map = {
     "deep_node_classification": models.DeepNodeClassificationDCNN,
     "post_sparse_node_classification": models.PostSparseNodeClassificationDCNN,
     "pre_sparse_node_classification": models.PreSparseNodeClassificationDCNN,
+    "true_sparse_node_classification": models.TrueSparseNodeClassificationDCNN,
     "deep_dense_node_classification": models.DeepDenseNodeClassificationDCNN,
     "graph_classification": models.GraphClassificationDCNN,
     "deep_graph_classification": models.DeepGraphClassificationDCNN,

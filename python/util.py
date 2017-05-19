@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.sparse as sp
 
 def A_to_diffusion_kernel(A, k):
     """
@@ -21,6 +22,25 @@ def A_to_diffusion_kernel(A, k):
             Apow.append(np.dot(A / (d + 1.0), Apow[-1]))
 
     return np.transpose(np.asarray(Apow, dtype='float32'), (1, 0, 2))
+
+
+def sparse_A_to_diffusion_kernel(A, k):
+    assert k >= 0
+
+    num_nodes = A.shape[0]
+
+    Apow = [sp.identity(num_nodes)]
+
+    if k > 0:
+        d = A.sum(0)
+
+        Apow.append(A / (d + 1.0))
+
+        for i in range(2, k + 1):
+            Apow.append((A / (d + 1.0)).dot(Apow[-1]))
+
+    return Apow
+
 
 def A_to_post_sparse_diffusion_kernel(A, k, threshold):
     K = A_to_diffusion_kernel(A, k)
